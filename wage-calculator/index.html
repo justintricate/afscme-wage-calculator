@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OHSU vs AFSCME Comparator</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>⚖️ OHSU vs AFSCME Comparator</h1>
+
+      <div class="offer-summary">
+        <div class="offer-card ohsu-card">
+          <h3>🏢 OHSU Offer</h3>
+          <ul>
+            <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $22.00.</li>
+            <li><strong>Y2:</strong> 2.5%. Floor: $22.55.</li>
+            <li><strong>Y3:</strong> 2.5%. Floor: $23.11.</li>
+            <li>
+              <strong>Bonus:</strong> $1,250 (&ge;0.5 FTE) / $625 (&lt;0.5 FTE)
+              if NO strike.
+            </li>
+          </ul>
+        </div>
+        <div class="offer-card afscme-card">
+          <h3>✊ AFSCME Offer</h3>
+          <ul>
+            <li><strong>Y1:</strong> Greater of 8% OR $5.00. Floor: $23.00.</li>
+            <li><strong>Y2:</strong> Greater of 5% OR $2.00. Floor: $25.00.</li>
+            <li><strong>Y3:</strong> Greater of 5% OR $2.00. Floor: $27.00.</li>
+            <li><strong>Note:</strong> Retro pay back to July 1, 2025.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <div class="form-row">
+          <div class="input-group wage-toggle-group">
+            <label>Input Type</label>
+            <div class="segmented-control">
+              <input
+                type="radio"
+                name="wageType"
+                id="typeHourly"
+                value="hourly"
+                checked
+              />
+              <label for="typeHourly" id="labelHourly">Hourly Rate</label>
+
+              <input
+                type="radio"
+                name="wageType"
+                id="typeSalary"
+                value="salary"
+              />
+              <label for="typeSalary" id="labelSalary">Annual Salary</label>
+            </div>
+          </div>
+
+          <div class="input-group flex-grow">
+            <label for="startVal" id="startValLabel"
+              >Current Hourly Rate ($)</label
+            >
+            <input
+              type="number"
+              id="startVal"
+              placeholder="e.g. 30.00"
+              step="0.01"
+            />
+          </div>
+
+          <div class="input-group flex-grow">
+            <label for="fte">FTE Status</label>
+            <select id="fte">
+              <option value="1.0" selected>1.0 FTE (40 hrs/wk)</option>
+              <option value="0.9">0.9 FTE (36 hrs/wk)</option>
+              <option value="0.8">0.8 FTE (32 hrs/wk)</option>
+              <option value="0.6">0.6 FTE (24 hrs/wk)</option>
+              <option value="0.5">0.5 FTE (20 hrs/wk)</option>
+              <option value="0.1">Under 0.5 FTE</option>
+            </select>
+          </div>
+
+          <div class="input-group flex-grow">
+            <label for="cpiScenario">Inflation Outlook (CPI)</label>
+            <select id="cpiScenario">
+              <option value="0.030" selected>1-Year Average (3.0%)</option>
+              <option value="0.042">5-Year Average (4.2%)</option>
+              <option value="0.050">3-Year Average (5.0%)</option>
+              <option value="0.020">Fed Target (2.0%)</option>
+            </select>
+            <div class="help-text">
+              Based on official BLS data.
+              <a
+                href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1913-"
+                target="_blank"
+                >View Historical Data</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+      <button id="runBtn">Run Comparison</button>
+
+      <div class="results-area" id="resultsArea">
+        <h2>Detailed Breakdown</h2>
+        <p
+          style="
+            font-size: 0.95em;
+            color: #555;
+            background: #fff3e0;
+            padding: 10px;
+            border-left: 4px solid #ff9800;
+            border-radius: 4px;
+          "
+        >
+          <strong>Inflation Warning:</strong> Hourly rates highlighted in
+          <span style="color: #c62828; font-weight: bold">red</span> indicate
+          that the offer is <em>below</em> the rate needed to maintain your
+          current buying power.
+        </p>
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th class="th-timeline">Timeline</th>
+              <th class="th-cpi" style="background: var(--accent-cpi)">
+                Maintain Buying Power<br /><small
+                  style="font-weight: normal; opacity: 0.9"
+                  >Target to equal today's dollars</small
+                >
+              </th>
+              <th class="th-offer">OHSU Offer</th>
+              <th class="th-offer">AFSCME Offer</th>
+              <th class="th-diff">
+                Difference<br /><small>(Annual Gross)</small>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+
+        <div class="totals-grid">
+          <div class="total-box ohsu-total">
+            <h3>OHSU 3-Year Total</h3>
+            <div class="big-num" id="ohsuTotalGross">$0</div>
+            <small id="ohsuBonusNote">Includes Ratification Bonus</small>
+          </div>
+          <div class="total-box afscme-total">
+            <h3>AFSCME 3-Year Total</h3>
+            <div class="big-num" id="afscmeTotalGross">$0</div>
+            <small>Includes estimated retro pay</small>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 30px; font-size: 1.2em">
+          3-Year Gross Difference:
+          <strong
+            id="finalDiff"
+            style="color: var(--accent-afscme); font-size: 1.5em"
+            >$0</strong
+          >
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

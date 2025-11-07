@@ -1,0 +1,396 @@
+:root {
+  --bg-color: #f0f2f5;
+  --card-bg: #ffffff;
+  --accent-ohsu: #53565a;
+  --accent-afscme: #005f4b;
+  --accent-cpi: #333;
+  --text-subtle: #666;
+  --border-color: #e1e4e8;
+  --primary-blue: #0066cc;
+}
+body {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: #333;
+  line-height: 1.5;
+  padding: 20px;
+  margin: 0;
+}
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+h1 {
+  text-align: center;
+  color: #333;
+  margin-top: 0;
+}
+
+/* OFFER SUMMARY */
+.offer-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+.offer-card {
+  padding: 15px 20px;
+  border-radius: 8px;
+  border-top: 5px solid #ccc;
+  background: #f8f9fa;
+  font-size: 0.9em;
+}
+.offer-card h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+.offer-card ul {
+  padding-left: 20px;
+  margin: 0;
+}
+.offer-card li {
+  margin-bottom: 5px;
+}
+.ohsu-card {
+  border-color: var(--accent-ohsu);
+}
+.afscme-card {
+  border-color: var(--accent-afscme);
+}
+
+/* === INPUT SECTION STYLES === */
+.input-section {
+  background-color: #eef2f6;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+.form-row {
+  display: flex;
+  gap: 20px; /* Slightly tighter gap to fit 4 items comfortably */
+  align-items: flex-start;
+}
+.flex-grow {
+  flex: 1;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+label {
+  font-weight: 600;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap; /* Prevent labels from wrapping awkwardly */
+}
+input[type='number'],
+select {
+  padding: 12px 15px;
+  border: 2px solid #e1e4e8;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+  height: 50px;
+  transition: border-color 0.2s;
+}
+input[type='number']:focus,
+select:focus {
+  border-color: var(--primary-blue);
+  outline: none;
+}
+.help-text {
+  font-size: 0.85em;
+  color: var(--text-subtle);
+  margin-top: 6px;
+}
+
+/* SEGMENTED CONTROL */
+.wage-toggle-group {
+  flex: 0 0 auto;
+  min-width: 240px;
+}
+.segmented-control {
+  display: flex;
+  background: #e1e4e8;
+  padding: 4px;
+  border-radius: 8px;
+  height: 50px;
+  box-sizing: border-box;
+}
+.segmented-control input {
+  display: none;
+}
+.segmented-control label {
+  flex: 1;
+  text-align: center;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+  user-select: none;
+}
+.segmented-control input:checked + label {
+  background: white;
+  color: var(--primary-blue);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Main Action Button */
+button#runBtn {
+  background-color: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 18px;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 4px 6px rgba(0, 102, 204, 0.2);
+}
+button#runBtn:hover {
+  background-color: #0052a3;
+  transform: translateY(-1px);
+}
+button#runBtn:active {
+  transform: translateY(1px);
+}
+
+/* RESULTS TABLE */
+.results-area {
+  display: none;
+  margin-top: 30px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  table-layout: fixed;
+}
+th {
+  background: #333;
+  color: white;
+  padding: 15px;
+  text-align: left;
+  font-size: 0.95em;
+  vertical-align: top;
+  letter-spacing: 0.5px;
+}
+.th-timeline {
+  width: 10%;
+}
+.th-cpi {
+  width: 22%;
+}
+.th-offer {
+  width: 24%;
+}
+.th-diff {
+  width: 20%;
+}
+td {
+  padding: 18px 15px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+.rate-cell {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+.annual-sub {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: normal;
+  margin-top: 6px;
+}
+.reason-tag {
+  display: block;
+  font-size: 0.8em;
+  color: var(--text-subtle);
+  font-style: italic;
+  margin-top: 8px;
+}
+.ohsu-col {
+  background-color: #fdfdfd;
+  border-left: 4px solid var(--accent-ohsu);
+}
+.afscme-col {
+  background-color: #f0fdf4;
+  border-left: 4px solid var(--accent-afscme);
+}
+/* CHANGED: Neutral light blue-gray background for Buying Power */
+.cpi-col {
+  background-color: #f0f4f8;
+  border-left: 4px solid var(--accent-cpi);
+  color: #333;
+}
+
+.diff-positive {
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+.diff-negative {
+  color: #c62828;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+.losing-to-inflation {
+  color: #c62828;
+}
+
+/* TOTALS */
+.totals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-top: 40px;
+}
+.total-box {
+  padding: 25px;
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.ohsu-total {
+  background: var(--accent-ohsu);
+}
+.afscme-total {
+  background: var(--accent-afscme);
+}
+.big-num {
+  font-size: 3em;
+  font-weight: 800;
+  margin: 15px 0;
+  line-height: 1;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  body {
+    padding: 15px 10px;
+  }
+  .container {
+    padding: 20px 15px;
+  }
+  .offer-summary {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .input-group,
+  .wage-toggle-group {
+    width: 100%;
+    min-width: auto;
+  }
+  .totals-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .big-num {
+    font-size: 2.5em;
+  }
+
+  /* Mobile Tables */
+  thead {
+    display: none;
+  }
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  tr {
+    margin-bottom: 25px;
+    border: 1px solid #e1e4e8;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    background: white;
+  }
+  td:first-child {
+    background-color: #333;
+    color: white;
+    padding: 12px 20px;
+    font-size: 1.1em;
+    border-bottom: none;
+  }
+  td {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+  }
+  td::before {
+    align-self: flex-start;
+    margin-bottom: 6px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    font-weight: 700;
+  }
+  td:nth-of-type(2)::before {
+    content: 'Buying Power Target';
+    color: var(--accent-cpi);
+  }
+  td:nth-of-type(3)::before {
+    content: 'OHSU Offer';
+    color: var(--accent-ohsu);
+  }
+  td:nth-of-type(4)::before {
+    content: 'AFSCME Offer';
+    color: var(--accent-afscme);
+  }
+  td:nth-of-type(5)::before {
+    content: 'Difference';
+    color: #333;
+  }
+  .ohsu-col,
+  .afscme-col,
+  .cpi-col {
+    border-left: none;
+  }
+  .cpi-col {
+    border-right: 5px solid var(--accent-cpi);
+  }
+  .ohsu-col {
+    border-right: 5px solid var(--accent-ohsu);
+  }
+  .afscme-col {
+    border-right: 5px solid var(--accent-afscme);
+  }
+}
