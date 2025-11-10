@@ -75,7 +75,7 @@ h1 {
 }
 .form-row {
   display: flex;
-  gap: 20px; /* Slightly tighter gap to fit 4 items comfortably */
+  gap: 20px;
   align-items: flex-start;
 }
 .flex-grow {
@@ -92,7 +92,7 @@ label {
   color: #444;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  white-space: nowrap; /* Prevent labels from wrapping awkwardly */
+  white-space: nowrap;
 }
 input[type='number'],
 select {
@@ -115,6 +115,14 @@ select:focus {
   font-size: 0.85em;
   color: var(--text-subtle);
   margin-top: 6px;
+}
+.help-text a {
+  color: var(--primary-blue);
+  font-weight: 500;
+  text-decoration: none;
+}
+.help-text a:hover {
+  text-decoration: underline;
 }
 
 /* SEGMENTED CONTROL */
@@ -180,11 +188,47 @@ button#runBtn:active {
   transform: translateY(1px);
 }
 
-/* RESULTS TABLE */
+/* RESULTS AREA */
 .results-area {
   display: none;
   margin-top: 30px;
 }
+
+/* STRIKE IMPACT BOX */
+.strike-impact-box {
+  background-color: #fff8e1;
+  border-left: 5px solid #ffb300;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+.strike-impact-box h3 {
+  margin-top: 0;
+  color: #e65100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.strike-net-context {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 1.05em;
+  line-height: 1.4;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* TABLE STYLES */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -242,7 +286,6 @@ td {
   background-color: #f0fdf4;
   border-left: 4px solid var(--accent-afscme);
 }
-/* CHANGED: Neutral light blue-gray background for Buying Power */
 .cpi-col {
   background-color: #f0f4f8;
   border-left: 4px solid var(--accent-cpi);

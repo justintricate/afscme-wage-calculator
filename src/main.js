@@ -6,103 +6,63 @@ const fmt = new Intl.NumberFormat('en-US', {
 });
 const WEEKS_RETRO = 19;
 
-const elements = {
-  labelHourly: document.getElementById('labelHourly'),
-  labelSalary: document.getElementById('labelSalary'),
-  typeHourly: document.getElementById('typeHourly'),
-  typeSalary: document.getElementById('typeSalary'),
-  startValLabel: document.getElementById('startValLabel'),
-  startVal: document.getElementById('startVal'),
-  tableBody: document.getElementById('tableBody'),
-  ohsuTotalGross: document.getElementById('ohsuTotalGross'),
-  afscmeTotalGross: document.getElementById('afscmeTotalGross'),
-  finalDiff: document.getElementById('finalDiff'),
-  resultsArea: document.getElementById('resultsArea'),
-  runBtn: document.querySelector('#runBtn'),
-};
-
-elements.labelHourly.addEventListener('click', (e) => {
-  if (elements.typeHourly.checked) {
+// --- WAGE TOGGLE LOGIC ---
+document.getElementById('labelHourly').addEventListener('click', (e) => {
+  const radio = document.getElementById('typeHourly');
+  if (radio.checked) {
     e.preventDefault();
-    elements.typeSalary.checked = true;
+    document.getElementById('typeSalary').checked = true;
     updateWageInputs('salary');
   }
 });
-
-elements.labelSalary.addEventListener('click', (e) => {
-  if (elements.typeSalary.checked) {
+document.getElementById('labelSalary').addEventListener('click', (e) => {
+  const radio = document.getElementById('typeSalary');
+  if (radio.checked) {
     e.preventDefault();
-    elements.typeHourly.checked = true;
+    document.getElementById('typeHourly').checked = true;
     updateWageInputs('hourly');
   }
 });
-
 document.querySelectorAll('input[name="wageType"]').forEach((radio) => {
-  radio.addEventListener('change', (e) => updateWageInputs(e.target.value));
+  radio.addEventListener('change', (e) => {
+    updateWageInputs(e.target.value);
+  });
 });
-
 function updateWageInputs(type) {
+  const label = document.getElementById('startValLabel');
+  const input = document.getElementById('startVal');
   if (type === 'salary') {
-    elements.startValLabel.innerText = 'Current Annual Salary ($)';
-    elements.startVal.placeholder = 'e.g. 62400';
+    label.innerText = 'Current Annual Salary ($)';
+    input.placeholder = 'e.g. 62400';
   } else {
-    elements.startValLabel.innerText = 'Current Hourly Rate ($)';
-    elements.startVal.placeholder = 'e.g. 30.00';
+    label.innerText = 'Current Hourly Rate ($)';
+    input.placeholder = 'e.g. 30.00';
   }
 }
 
+// --- HELPER: Apply raise rules ---
 function applyRaise(currentRate, pct, flat, floor) {
-  const raisePct = currentRate * pct;
-  const useFlat = flat > raisePct;
-  const tempRate = currentRate + (useFlat ? flat : raisePct);
-  const hitFloor = tempRate < floor;
-  const finalRate = hitFloor ? floor : tempRate;
-  const reason = hitFloor
+  let raisePct = currentRate * pct;
+  let useFlat = flat > raisePct;
+  let tempRate = currentRate + (useFlat ? flat : raisePct);
+  let hitFloor = tempRate < floor;
+  let finalRate = hitFloor ? floor : tempRate;
+  let reason = hitFloor
     ? `Bumped to ${fmt.format(floor)} floor`
     : useFlat && flat > 0
     ? `Used flat ${fmt.format(flat)} increase`
     : `Used ${(pct * 100).toFixed(1)}% increase`;
-  return { rate: finalRate, reason };
-}
-
-function renderDual(hourlyRate, annualHours) {
-  return `<div class="rate-cell">${fmt.format(
-    hourlyRate
-  )}/hr</div><div class="annual-sub">(${fmt.format(
-    hourlyRate * annualHours
-  )}/yr)</div>`;
-}
-
-function buildRow(year, cpi, oRes, aRes, annualHours) {
-  const hDiff = aRes.rate - oRes.rate;
-  const diffClass = hDiff > 0 ? 'diff-positive' : 'diff-negative';
-  const ohsuInflationClass = oRes.rate < cpi ? 'losing-to-inflation' : '';
-  const afscmeInflationClass = aRes.rate < cpi ? 'losing-to-inflation' : '';
-
-  return `<tr>
-    <td><strong>Year ${year}</strong></td>
-    <td class="cpi-col">${renderDual(cpi, annualHours)}</td>
-    <td class="ohsu-col ${ohsuInflationClass}">
-      ${renderDual(oRes.rate, annualHours)}
-      <span class="reason-tag">${oRes.reason}</span>
-    </td>
-    <td class="afscme-col ${afscmeInflationClass}">
-      ${renderDual(aRes.rate, annualHours)}
-      <span class="reason-tag">${aRes.reason}</span>
-    </td>
-    <td class="${diffClass}">
-      ${hDiff > 0 ? '+' : ''}${fmt.format(hDiff * annualHours)}
-      <div class="annual-sub" style="opacity: 0.7">(${
-        hDiff > 0 ? '+' : ''
-      }${fmt.format(hDiff)}/hr)</div>
-    </td>
-  </tr>`;
+  return { rate: finalRate, reason: reason };
 }
 
 function calculate() {
-  const startVal = parseFloat(elements.startVal.value);
+  const startVal = parseFloat(document.getElementById('startVal').value);
   const fte = parseFloat(document.getElementById('fte').value);
   const cpiPct = parseFloat(document.getElementById('cpiScenario').value);
+  // STRIKE LOGIC: If days > 0, strike happened.
+  const strikeDays =
+    parseFloat(document.getElementById('strikeDays').value) || 0;
+  const strike = strikeDays > 0;
   const isSalaryInput =
     document.querySelector('input[name="wageType"]:checked').value === 'salary';
 
@@ -112,69 +72,152 @@ function calculate() {
   }
 
   const annualHours = 2080 * fte;
-  const startHourly = isSalaryInput ? startVal / annualHours : startVal;
+  let startHourly = isSalaryInput ? startVal / annualHours : startVal;
+
   let oRate = startHourly,
     aRate = startHourly,
     cpiRate = startHourly;
   let oGross = 0,
     aGross = 0;
-  const rows = [];
+  let html = '';
 
-  cpiRate *= 1 + cpiPct;
-  const oRes1 = applyRaise(oRate, 0.04, 1.25, 22.0);
-  oRate = oRes1.rate;
-  const aRes1 = applyRaise(aRate, 0.08, 5.0, 23.0);
-  aRate = aRes1.rate;
-  rows.push(buildRow(1, cpiRate, oRes1, aRes1, annualHours));
-  oGross += oRate * annualHours;
-  aGross += aRate * annualHours;
+  // --- PRE-CALCULATE YEARLY DIFFERENCES ---
+  let y1_cpi = startHourly * (1 + cpiPct);
+  let y1_o = applyRaise(oRate, 0.04, 1.25, 22.0);
+  let y1_a = applyRaise(aRate, 0.08, 5.0, 23.0);
+  let y1_diff = (y1_a.rate - y1_o.rate) * annualHours;
 
-  const ohsuCash = fte >= 0.5 ? 1250 : 625;
-  const hourlyIncrease = aRate - startHourly;
-  const afscmeRetro = hourlyIncrease * fte * 40 * WEEKS_RETRO;
+  let y2_cpi = y1_cpi * (1 + cpiPct);
+  let y2_o = applyRaise(y1_o.rate, 0.025, 0, 22.55);
+  let y2_a = applyRaise(y1_a.rate, 0.05, 2.0, 25.0);
+  let y2_diff = (y2_a.rate - y2_o.rate) * annualHours;
+
+  let y3_cpi = y2_cpi * (1 + cpiPct);
+  let y3_o = applyRaise(y2_o.rate, 0.025, 0, 23.11);
+  let y3_a = applyRaise(y2_a.rate, 0.05, 2.0, 27.0);
+  let y3_diff = (y3_a.rate - y3_o.rate) * annualHours;
+
+  // --- STRIKE TRADE-OFF ANALYSIS ---
+  const strikeImpactBox = document.getElementById('strikeImpactBox');
+  if (strike) {
+    const totalLost = startHourly * 8 * fte * strikeDays;
+    document.getElementById('strikeDaysText').innerText = strikeDays;
+    document.getElementById('strikeLostWages').innerText =
+      fmt.format(totalLost);
+
+    let netY1 = y1_diff - totalLost;
+    let netY2 = y1_diff + y2_diff - totalLost;
+    let netY3 = y1_diff + y2_diff + y3_diff - totalLost;
+
+    let netMsg = '';
+    if (netY1 >= 0) {
+      netMsg = `With these losses, the AFSCME offer puts you <strong class="diff-positive">${fmt.format(
+        netY1
+      )} ahead</strong> in Year 1 alone.`;
+    } else if (netY2 >= 0) {
+      netMsg = `You would be behind in Year 1, but the contract gains mean you come out <strong class="diff-positive">${fmt.format(
+        netY2
+      )} ahead</strong> by the end of Year 2.`;
+    } else if (netY3 >= 0) {
+      netMsg = `It will take time to recoup the losses, but you will be <strong class="diff-positive">${fmt.format(
+        netY3
+      )} ahead</strong> over the full 3-year contract.`;
+    } else {
+      netMsg = `Based on this duration, the strike losses would exceed the contract gains over 3 years by <strong class="diff-negative">${fmt.format(
+        Math.abs(netY3)
+      )}</strong>.`;
+    }
+    document.getElementById('strikeNetContext').innerHTML = netMsg;
+    strikeImpactBox.style.display = 'block';
+  } else {
+    strikeImpactBox.style.display = 'none';
+  }
+
+  // --- RENDER ROWS ---
+  html += row(1, y1_cpi, y1_o, y1_a, annualHours);
+  oGross += y1_o.rate * annualHours;
+  aGross += y1_a.rate * annualHours;
+
+  // Immediate Cash
+  let ohsuCash = !strike ? (fte >= 0.5 ? 1250 : 625) : 0;
+  let hourlyIncrease = y1_a.rate - startHourly;
+  let weeklyHours = fte * 40;
+  let afscmeRetro = hourlyIncrease * weeklyHours * WEEKS_RETRO;
   oGross += ohsuCash;
   aGross += afscmeRetro;
 
-  const cashDiff = afscmeRetro - ohsuCash;
-  rows.push(`<tr style="background:#eef6fc;">
-    <td><strong>Immediate Cash</strong></td>
-    <td class="cpi-col" style="opacity:0.5;"><small>N/A</small></td>
-    <td class="ohsu-col">
-      <div class="rate-cell">${fmt.format(ohsuCash)}</div>
-      <span class="reason-tag">Ratification Bonus</span>
-    </td>
-    <td class="afscme-col">
-      <div class="rate-cell">${fmt.format(afscmeRetro)}</div>
-      <span class="reason-tag">Est. Retro Pay (~${WEEKS_RETRO} weeks)</span>
-    </td>
-    <td class="${cashDiff > 0 ? 'diff-positive' : 'diff-negative'}">
-      ${cashDiff > 0 ? '+' : ''}${fmt.format(cashDiff)}
-    </td>
-  </tr>`);
+  html += `
+    <tr style="background:#eef6fc;">
+        <td><strong>Immediate Cash</strong></td>
+        <td class="cpi-col" style="opacity:0.5;"><small>N/A</small></td>
+        <td class="ohsu-col">
+            <div class="rate-cell">${fmt.format(ohsuCash)}</div>
+            <span class="reason-tag">${
+              strike ? 'Strike declared (Bonus lost)' : 'Ratification Bonus'
+            }</span>
+        </td>
+        <td class="afscme-col">
+             <div class="rate-cell">${fmt.format(afscmeRetro)}</div>
+             <span class="reason-tag">Est. Retro Pay (~${WEEKS_RETRO} weeks)</span>
+        </td>
+        <td class="${
+          afscmeRetro - ohsuCash > 0 ? 'diff-positive' : 'diff-negative'
+        }">
+            ${afscmeRetro - ohsuCash > 0 ? '+' : ''}${fmt.format(
+    afscmeRetro - ohsuCash
+  )}
+        </td>
+    </tr>`;
 
-  cpiRate *= 1 + cpiPct;
-  const oRes2 = applyRaise(oRate, 0.025, 0, 22.55);
-  oRate = oRes2.rate;
-  const aRes2 = applyRaise(aRate, 0.05, 2.0, 25.0);
-  aRate = aRes2.rate;
-  rows.push(buildRow(2, cpiRate, oRes2, aRes2, annualHours));
-  oGross += oRate * annualHours;
-  aGross += aRate * annualHours;
+  html += row(2, y2_cpi, y2_o, y2_a, annualHours);
+  oGross += y2_o.rate * annualHours;
+  aGross += y2_a.rate * annualHours;
 
-  cpiRate *= 1 + cpiPct;
-  const oRes3 = applyRaise(oRate, 0.025, 0, 23.11);
-  oRate = oRes3.rate;
-  const aRes3 = applyRaise(aRate, 0.05, 2.0, 27.0);
-  aRate = aRes3.rate;
-  rows.push(buildRow(3, cpiRate, oRes3, aRes3, annualHours));
-  oGross += oRate * annualHours;
-  aGross += aRate * annualHours;
+  html += row(3, y3_cpi, y3_o, y3_a, annualHours);
+  oGross += y3_o.rate * annualHours;
+  aGross += y3_a.rate * annualHours;
 
-  elements.tableBody.innerHTML = rows.join('');
-  elements.ohsuTotalGross.innerText = fmt.format(oGross);
-  elements.afscmeTotalGross.innerText = fmt.format(aGross);
-  elements.finalDiff.innerText = fmt.format(aGross - oGross);
-  elements.resultsArea.style.display = 'block';
+  // RENDER FINAL
+  document.getElementById('tableBody').innerHTML = html;
+  document.getElementById('ohsuTotalGross').innerText = fmt.format(oGross);
+  document.getElementById('afscmeTotalGross').innerText = fmt.format(aGross);
+  document.getElementById('finalDiff').innerText = fmt.format(aGross - oGross);
+  document.getElementById('ohsuBonusNote').innerText =
+    ohsuCash > 0
+      ? `Includes ${fmt.format(ohsuCash)} bonus`
+      : 'No ratification bonus (Strike)';
+  document.getElementById('resultsArea').style.display = 'block';
 }
 
-elements.runBtn.addEventListener('click', calculate);
+function renderDual(hourlyRate, annualHours) {
+  return `
+        <div class="rate-cell">${fmt.format(hourlyRate)}/hr</div>
+        <div class="annual-sub">(${fmt.format(
+          hourlyRate * annualHours
+        )}/yr)</div>
+    `;
+}
+
+function row(year, cpi, oRes, aRes, annualHours) {
+  let hDiff = aRes.rate - oRes.rate;
+  return `<tr>
+        <td><strong>Year ${year}</strong></td>
+        <td class="cpi-col">${renderDual(cpi, annualHours)}</td>
+        <td class="ohsu-col ${oRes.rate < cpi ? 'losing-to-inflation' : ''}">
+            ${renderDual(oRes.rate, annualHours)}
+            <span class="reason-tag">${oRes.reason}</span>
+        </td>
+        <td class="afscme-col ${aRes.rate < cpi ? 'losing-to-inflation' : ''}">
+             ${renderDual(aRes.rate, annualHours)}
+             <span class="reason-tag">${aRes.reason}</span>
+        </td>
+        <td class="${hDiff > 0 ? 'diff-positive' : 'diff-negative'}">
+            ${hDiff > 0 ? '+' : ''}${fmt.format(hDiff * annualHours)}
+             <div class="annual-sub" style="opacity: 0.7">
+                (${hDiff > 0 ? '+' : ''}${fmt.format(hDiff)}/hr)
+            </div>
+        </td>
+    </tr>`;
+}
+
+document.querySelector('#runBtn').addEventListener('click', calculate);
