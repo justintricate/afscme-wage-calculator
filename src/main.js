@@ -40,6 +40,11 @@ function updateWageInputs(type) {
   }
 }
 
+// --- AUTO-ENABLE STRIKE TOGGLE ---
+document.getElementById('strikeDays').addEventListener('input', (e) => {
+  // Listener kept for potential future UI responsiveness needs
+});
+
 // --- HELPER: Apply raise rules ---
 function applyRaise(currentRate, pct, flat, floor) {
   let raisePct = currentRate * pct;
@@ -59,7 +64,6 @@ function calculate() {
   const startVal = parseFloat(document.getElementById('startVal').value);
   const fte = parseFloat(document.getElementById('fte').value);
   const cpiPct = parseFloat(document.getElementById('cpiScenario').value);
-  // STRIKE LOGIC: If days > 0, strike happened.
   const strikeDays =
     parseFloat(document.getElementById('strikeDays').value) || 0;
   const strike = strikeDays > 0;
@@ -81,71 +85,101 @@ function calculate() {
     aGross = 0;
   let html = '';
 
-  // --- PRE-CALCULATE YEARLY DIFFERENCES ---
+  // --- 1. CALCULATE YEARLY RATES FIRST ---
   let y1_cpi = startHourly * (1 + cpiPct);
   let y1_o = applyRaise(oRate, 0.04, 1.25, 22.0);
   let y1_a = applyRaise(aRate, 0.08, 5.0, 23.0);
-  let y1_diff = (y1_a.rate - y1_o.rate) * annualHours;
 
   let y2_cpi = y1_cpi * (1 + cpiPct);
   let y2_o = applyRaise(y1_o.rate, 0.025, 0, 22.55);
   let y2_a = applyRaise(y1_a.rate, 0.05, 2.0, 25.0);
-  let y2_diff = (y2_a.rate - y2_o.rate) * annualHours;
 
   let y3_cpi = y2_cpi * (1 + cpiPct);
   let y3_o = applyRaise(y2_o.rate, 0.025, 0, 23.11);
   let y3_a = applyRaise(y2_a.rate, 0.05, 2.0, 27.0);
-  let y3_diff = (y3_a.rate - y3_o.rate) * annualHours;
 
-  // --- STRIKE TRADE-OFF ANALYSIS ---
+  // --- 2. CALCULATE CASH/RETRO ---
+  let ohsuBonusAvailable = fte >= 0.5 ? 1250 : 625;
+  let ohsuCash = !strike ? ohsuBonusAvailable : 0;
+
+  let hourlyIncrease = y1_a.rate - startHourly;
+  let weeklyHours = fte * 40;
+  let afscmeRetro = hourlyIncrease * weeklyHours * WEEKS_RETRO;
+
+  // --- 3. TRADE-OFF ANALYSIS ---
   const strikeImpactBox = document.getElementById('strikeImpactBox');
   if (strike) {
-    const totalLost = startHourly * 8 * fte * strikeDays;
-    document.getElementById('strikeDaysText').innerText = strikeDays;
-    document.getElementById('strikeLostWages').innerText =
-      fmt.format(totalLost);
+    // COSTS
+    const lostWages = startHourly * 8 * fte * strikeDays;
+    const totalStrikeCost = lostWages + ohsuBonusAvailable;
 
-    let netY1 = y1_diff - totalLost;
-    let netY2 = y1_diff + y2_diff - totalLost;
-    let netY3 = y1_diff + y2_diff + y3_diff - totalLost;
+    // GAINS
+    let gain_Y1_wages = (y1_a.rate - y1_o.rate) * annualHours;
+    let gain_Y1_total = gain_Y1_wages + afscmeRetro; // Wages + Retro
+    let gain_Y2 = (y2_a.rate - y2_o.rate) * annualHours;
+    let gain_Y3 = (y3_a.rate - y3_o.rate) * annualHours;
 
-    let netMsg = '';
+    // NET POSITIONS
+    let netY1 = gain_Y1_total - totalStrikeCost;
+    let netY2 = netY1 + gain_Y2;
+    let netY3 = netY2 + gain_Y3;
+
+    // BUILD ANALYSIS MESSAGE
+    let boxHtml = `<h3>⚖️ Strike Trade-off Analysis</h3>`;
+
+    // Section 1: The Costs
+    boxHtml += `<p style="margin-bottom: 8px;"><strong>The Costs:</strong> Striking for ${strikeDays} days costs approx. <strong class="diff-negative">${fmt.format(
+      totalStrikeCost
+    )}</strong>.<br>`;
+    boxHtml += `<span style="font-size: 0.9em; color: #666; margin-left: 10px;">(${fmt.format(
+      lostWages
+    )} lost wages + ${fmt.format(
+      ohsuBonusAvailable
+    )} lost OHSU bonus)</span></p>`;
+
+    // Section 2: The Gains
+    boxHtml += `<p style="margin-bottom: 8px;"><strong>The Gains:</strong> The AFSCME Year 1 offer is worth <strong style="color: var(--accent-afscme);">${fmt.format(
+      gain_Y1_total
+    )} MORE</strong> than OHSU's.<br>`;
+    boxHtml += `<span style="font-size: 0.9em; color: #666; margin-left: 10px;">(${fmt.format(
+      gain_Y1_wages
+    )} in better wages + ${fmt.format(afscmeRetro)} in back pay)</span></p>`;
+
+    // Section 3: Bottom Line (UPDATED LOGIC FOR CLARITY)
+    boxHtml += `<div class="strike-net-context"><strong>Bottom Line:</strong> `;
     if (netY1 >= 0) {
-      netMsg = `With these losses, the AFSCME offer puts you <strong class="diff-positive">${fmt.format(
+      boxHtml += `You end up <strong class="diff-positive">${fmt.format(
         netY1
-      )} ahead</strong> in Year 1 alone.`;
+      )} ahead</strong> in Year 1.`;
     } else if (netY2 >= 0) {
-      netMsg = `You would be behind in Year 1, but the contract gains mean you come out <strong class="diff-positive">${fmt.format(
+      // Explicitly state Y1 is a loss, but Y2 recovers it.
+      boxHtml += `You are behind in Year 1, but you recoup all losses and end up <strong class="diff-positive">${fmt.format(
         netY2
-      )} ahead</strong> by the end of Year 2.`;
+      )} ahead</strong> by Year 2.`;
     } else if (netY3 >= 0) {
-      netMsg = `It will take time to recoup the losses, but you will be <strong class="diff-positive">${fmt.format(
+      boxHtml += `You are behind for the first two years, but you recoup all losses and end up <strong class="diff-positive">${fmt.format(
         netY3
-      )} ahead</strong> over the full 3-year contract.`;
+      )} ahead</strong> by Year 3.`;
     } else {
-      netMsg = `Based on this duration, the strike losses would exceed the contract gains over 3 years by <strong class="diff-negative">${fmt.format(
+      boxHtml += `Based on this duration, strike costs would exceed the cumulative 3-year gains by <strong class="diff-negative">${fmt.format(
         Math.abs(netY3)
       )}</strong>.`;
     }
-    document.getElementById('strikeNetContext').innerHTML = netMsg;
+    boxHtml += `</div>`;
+
+    strikeImpactBox.innerHTML = boxHtml;
     strikeImpactBox.style.display = 'block';
   } else {
     strikeImpactBox.style.display = 'none';
   }
 
-  // --- RENDER ROWS ---
+  // --- 4. RENDER TABLE ---
   html += row(1, y1_cpi, y1_o, y1_a, annualHours);
   oGross += y1_o.rate * annualHours;
   aGross += y1_a.rate * annualHours;
 
-  // Immediate Cash
-  let ohsuCash = !strike ? (fte >= 0.5 ? 1250 : 625) : 0;
-  let hourlyIncrease = y1_a.rate - startHourly;
-  let weeklyHours = fte * 40;
-  let afscmeRetro = hourlyIncrease * weeklyHours * WEEKS_RETRO;
   oGross += ohsuCash;
   aGross += afscmeRetro;
-
   html += `
     <tr style="background:#eef6fc;">
         <td><strong>Immediate Cash</strong></td>
