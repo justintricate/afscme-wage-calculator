@@ -99,7 +99,7 @@ function calculate() {
   let y3_a = applyRaise(y2_a.rate, 0.05, 2.0, 27.0);
 
   // --- 2. CALCULATE CASH/RETRO ---
-  let ohsuBonusAvailable = fte >= 0.5 ? 1250 : 625;
+  let ohsuBonusAvailable = fte >= 0.5 ? 1500 : 750;
   let ohsuCash = !strike ? ohsuBonusAvailable : 0;
 
   let hourlyIncrease = y1_a.rate - startHourly;
