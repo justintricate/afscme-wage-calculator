@@ -4,7 +4,7 @@ const fmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
 });
-const WEEKS_RETRO = 19;
+const WEEKS_RETRO = 22;
 
 // --- WAGE TOGGLE LOGIC ---
 document.getElementById('labelHourly').addEventListener('click', (e) => {
