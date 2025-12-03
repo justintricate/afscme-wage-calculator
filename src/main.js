@@ -91,11 +91,11 @@ function calculate() {
   let y1_a = applyRaise(aRate, 0.08, 5.0, 23.0);
 
   let y2_cpi = y1_cpi * (1 + cpiPct);
-  let y2_o = applyRaise(y1_o.rate, 0.025, 0, 22.55);
+  let y2_o = applyRaise(y1_o.rate, 0.0325, 0, 22.72);
   let y2_a = applyRaise(y1_a.rate, 0.05, 2.0, 25.0);
 
   let y3_cpi = y2_cpi * (1 + cpiPct);
-  let y3_o = applyRaise(y2_o.rate, 0.025, 0, 23.11);
+  let y3_o = applyRaise(y2_o.rate, 0.03, 0, 23.4);
   let y3_a = applyRaise(y2_a.rate, 0.05, 2.0, 27.0);
 
   // --- 2. CALCULATE CASH/RETRO ---
