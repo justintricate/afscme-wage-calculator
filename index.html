@@ -4,23 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OHSU Tentative Agreement vs AFSCME Last Ask</title>
-    <style>
-        :root {
-            --accent-ta: #1976D2;  /* Blue for TA */
-            --accent-ask: #388E3C; /* Green for Union Ask */
-            --accent-cpi: #f5f5f5;
-        }
-        .ta-card h3 { color: var(--accent-ta); border-bottom: 2px solid var(--accent-ta); }
-        .ask-card h3 { color: var(--accent-ask); border-bottom: 2px solid var(--accent-ask); }
-        
-        /* Update table headers to match new vars */
-        .th-offer:nth-child(3) { background: var(--accent-ta); color: white; }
-        .th-offer:nth-child(4) { background: var(--accent-ask); color: white; }
-        
-        /* Logic for column colors */
-        .ta-col { background-color: #e3f2fd; } /* Light Blue */
-        .ask-col { background-color: #e8f5e9; } /* Light Green */
-    </style>
   </head>
   <body>
     <div class="container">
@@ -28,16 +11,16 @@
 
       <div class="offer-summary">
         <div class="offer-card ta-card">
-          <h3>🤝 Tentative Agreement</h3>
-          <ul>
-            <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $20.00.</li>
-            <li><strong>Y2:</strong> 3.25%. Floor: $21.00.</li>
-            <li><strong>Y3:</strong> 3%. Floor: $23.00.</li>
-            <li>
-              <strong>Bonus:</strong> $4,500 (0.5-1.0 FTE) <br> $2,250 (0-0.49 FTE).
-            </li>
-          </ul>
-        </div>
+  <h3>🤝 Tentative Agreement</h3>
+  <ul>
+    <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $20.00.</li>
+    <li><strong>Y2:</strong> 3.25%. <br>Floor: $21 (July) ➜ $22 (Jan).</li>
+    <li><strong>Y3:</strong> 3%. <br>Floor: $23 (July) ➜ $24 (Jan) ➜ $25 (June).</li>
+    <li>
+      <strong>Bonus:</strong> $4,500 (&ge;0.5 FTE) / $2,250 (&lt;0.5 FTE).
+    </li>
+  </ul>
+</div>
         <div class="offer-card ask-card">
           <h3>🗣️ Last Union Ask</h3>
           <ul>
@@ -128,7 +111,7 @@
         </div>
         
         <div style="text-align: center; margin-top: 30px; font-size: 1.2em">
-          GAP (What was left on the table):
+          Difference:
           <strong id="finalDiff" style="color: var(--accent-ask); font-size: 1.5em">$0</strong>
         </div>
       </div>
