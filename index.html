@@ -3,25 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OHSU Tentative Agreement vs AFSCME Last Ask</title>
+    <title>OHSU TA vs Last Ask Comparator</title>
   </head>
   <body>
     <div class="container">
-      <h1>⚖️ TA vs Last Ask Comparator</h1>
+      <h1>⚖️ Tentative Agreement vs Last Ask</h1>
 
       <div class="offer-summary">
-        <div class="offer-card ta-card">
-  <h3>🤝 Tentative Agreement</h3>
-  <ul>
-    <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $20.00.</li>
-    <li><strong>Y2:</strong> 3.25%. <br>Floor: $21 (July) ➜ $22 (Jan).</li>
-    <li><strong>Y3:</strong> 3%. <br>Floor: $23 (July) ➜ $24 (Jan) ➜ $25 (June).</li>
-    <li>
-      <strong>Bonus:</strong> $4,500 (&ge;0.5 FTE) / $2,250 (&lt;0.5 FTE).
-    </li>
-  </ul>
-</div>
-        <div class="offer-card ask-card">
+        <div class="offer-card ohsu-card">
+          <h3>🤝 Tentative Agreement</h3>
+          <ul>
+            <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $20.00.</li>
+            <li><strong>Y2:</strong> 3.25%. <br>Floor: $21 (July) ➜ $22 (Jan).</li>
+            <li><strong>Y3:</strong> 3%. <br>Floor: $23 (July) ➜ $24 (Jan) ➜ $25 (June).</li>
+            <li>
+              <strong>Bonus:</strong> $4,500 (0.5-1.0 FTE) <br> $2,250 (0-0.49 FTE).
+            </li>
+          </ul>
+        </div>
+        <div class="offer-card afscme-card">
           <h3>🗣️ Last Union Ask</h3>
           <ul>
             <li><strong>Y1:</strong> Greater of 8% OR $5.00. Floor: $23.00.</li>
@@ -73,24 +73,27 @@
               <option value="0.050">3-Year Average (5.0%)</option>
               <option value="0.020">Fed Target (2.0%)</option>
             </select>
+            <div class="help-text">
+               Based on official BLS data.
+             </div>
           </div>
         </div>
       </div>
       
       <button id="runBtn">Run Comparison</button>
 
-      <div class="results-area" id="resultsArea" style="display:none;">
+      <div class="results-area" id="resultsArea">
         
         <h2>Detailed Breakdown</h2>
         <table id="resultsTable">
           <thead>
             <tr>
               <th class="th-timeline">Timeline</th>
-              <th class="th-cpi" style="background: #90A4AE; color: white;">
+              <th class="th-cpi" style="background: var(--accent-cpi)">
                 Maintain Buying Power
               </th>
-              <th class="th-offer">Tentative Agreement</th>
-              <th class="th-offer">Last Union Ask</th>
+              <th class="th-offer" style="background: var(--accent-ohsu)">Tentative Agreement</th>
+              <th class="th-offer" style="background: var(--accent-afscme)">Last Union Ask</th>
               <th class="th-diff">Difference (Gross)</th>
             </tr>
           </thead>
@@ -98,21 +101,21 @@
         </table>
 
         <div class="totals-grid">
-          <div class="total-box ta-total" style="border-top: 4px solid var(--accent-ta); background: #f9f9f9; padding: 15px;">
-            <h3 style="color: var(--accent-ta);">TA 3-Year Total</h3>
-            <div class="big-num" id="taTotalGross">$0</div>
-            <small id="taBonusNote">Includes Bonus</small>
+          <div class="total-box ohsu-total">
+            <h3>TA 3-Year Total</h3>
+            <div class="big-num" id="ohsuTotalGross">$0</div>
+            <small id="ohsuBonusNote">Includes Bonus</small>
           </div>
-          <div class="total-box ask-total" style="border-top: 4px solid var(--accent-ask); background: #f9f9f9; padding: 15px;">
-            <h3 style="color: var(--accent-ask);">Last Ask 3-Year Total</h3>
-            <div class="big-num" id="askTotalGross">$0</div>
+          <div class="total-box afscme-total">
+            <h3>Last Ask 3-Year Total</h3>
+            <div class="big-num" id="afscmeTotalGross">$0</div>
             <small>Includes Retro Pay</small>
           </div>
         </div>
         
         <div style="text-align: center; margin-top: 30px; font-size: 1.2em">
           Difference:
-          <strong id="finalDiff" style="color: var(--accent-ask); font-size: 1.5em">$0</strong>
+          <strong id="finalDiff" style="color: var(--accent-afscme); font-size: 1.5em">$0</strong>
         </div>
       </div>
     </div>
