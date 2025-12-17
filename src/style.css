@@ -411,11 +411,11 @@ td {
     color: var(--accent-cpi);
   }
   td:nth-of-type(3)::before {
-    content: 'OHSU Offer';
+    content: 'Tentative Agreement';
     color: var(--accent-ohsu);
   }
   td:nth-of-type(4)::before {
-    content: 'AFSCME Offer';
+    content: 'AFSCME Last Ask';
     color: var(--accent-afscme);
   }
   td:nth-of-type(5)::before {
