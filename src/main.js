@@ -4,7 +4,14 @@ const fmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
 });
-const WEEKS_RETRO = 22;
+
+// --- DYNAMIC RETRO DATE CALCULATION ---
+// Calculates weeks from July 1, 2025 to today
+const retroStartDate = new Date('2025-07-01');
+const currentDate = new Date(); // Uses user's current date
+const oneWeek = 1000 * 60 * 60 * 24 * 7;
+// Math.max to ensure we don't get negative weeks if system clock is weird
+const WEEKS_RETRO = Math.max(0, (currentDate - retroStartDate) / oneWeek);
 
 // --- WAGE TOGGLE LOGIC ---
 document.getElementById('labelHourly').addEventListener('click', (e) => {
@@ -28,6 +35,7 @@ document.querySelectorAll('input[name="wageType"]').forEach((radio) => {
     updateWageInputs(e.target.value);
   });
 });
+
 function updateWageInputs(type) {
   const label = document.getElementById('startValLabel');
   const input = document.getElementById('startVal');
@@ -40,23 +48,22 @@ function updateWageInputs(type) {
   }
 }
 
-// --- AUTO-ENABLE STRIKE TOGGLE ---
-document.getElementById('strikeDays').addEventListener('input', (e) => {
-  // Listener kept for potential future UI responsiveness needs
-});
-
 // --- HELPER: Apply raise rules ---
 function applyRaise(currentRate, pct, flat, floor) {
   let raisePct = currentRate * pct;
   let useFlat = flat > raisePct;
   let tempRate = currentRate + (useFlat ? flat : raisePct);
+  
+  // Floor check
   let hitFloor = tempRate < floor;
   let finalRate = hitFloor ? floor : tempRate;
+  
   let reason = hitFloor
     ? `Bumped to ${fmt.format(floor)} floor`
     : useFlat && flat > 0
     ? `Used flat ${fmt.format(flat)} increase`
-    : `Used ${(pct * 100).toFixed(1)}% increase`;
+    : `Used ${(pct * 100).toFixed(2)}% increase`; // Changed to 2 decimals for 3.25%
+    
   return { rate: finalRate, reason: reason };
 }
 
@@ -64,9 +71,9 @@ function calculate() {
   const startVal = parseFloat(document.getElementById('startVal').value);
   const fte = parseFloat(document.getElementById('fte').value);
   const cpiPct = parseFloat(document.getElementById('cpiScenario').value);
-  const strikeDays =
-    parseFloat(document.getElementById('strikeDays').value) || 0;
-  const strike = strikeDays > 0;
+  // Strike logic removed for this specific comparison as requested, 
+  // or treated as 0 for the TA calculation.
+  
   const isSalaryInput =
     document.querySelector('input[name="wageType"]:checked').value === 'salary';
 
@@ -78,148 +85,107 @@ function calculate() {
   const annualHours = 2080 * fte;
   let startHourly = isSalaryInput ? startVal / annualHours : startVal;
 
-  let oRate = startHourly,
-    aRate = startHourly,
+  let taRate = startHourly, // Previously OHSU
+    askRate = startHourly,  // Previously Union/AFSCME
     cpiRate = startHourly;
-  let oGross = 0,
-    aGross = 0;
+    
+  let taGross = 0,
+    askGross = 0;
   let html = '';
 
-  // --- 1. CALCULATE YEARLY RATES FIRST ---
+  // --- 1. CALCULATE YEARLY RATES ---
+  
+  // YEAR 1
   let y1_cpi = startHourly * (1 + cpiPct);
-  let y1_o = applyRaise(oRate, 0.04, 1.25, 22.0);
-  let y1_a = applyRaise(aRate, 0.08, 5.0, 23.0);
+  
+  // TA: 4% or 1.25, Floor 20
+  let y1_ta = applyRaise(taRate, 0.04, 1.25, 20.0);
+  
+  // ASK: 8% or 5.00, Floor 23
+  let y1_ask = applyRaise(askRate, 0.08, 5.0, 23.0);
 
+  // YEAR 2
   let y2_cpi = y1_cpi * (1 + cpiPct);
-  let y2_o = applyRaise(y1_o.rate, 0.0325, 0, 22.72);
-  let y2_a = applyRaise(y1_a.rate, 0.05, 2.0, 25.0);
+  
+  // TA: 3.25%, Floor 21 (Assuming July 1 date for simplicity of chart)
+  let y2_ta = applyRaise(y1_ta.rate, 0.0325, 0, 21.0);
+  
+  // ASK: 5% or 2.00, Floor 25
+  let y2_ask = applyRaise(y1_ask.rate, 0.05, 2.0, 25.0);
 
+  // YEAR 3
   let y3_cpi = y2_cpi * (1 + cpiPct);
-  let y3_o = applyRaise(y2_o.rate, 0.03, 0, 23.4);
-  let y3_a = applyRaise(y2_a.rate, 0.05, 2.0, 27.0);
+  
+  // TA: 3%, Floor 23
+  let y3_ta = applyRaise(y2_ta.rate, 0.03, 0, 23.0);
+  
+  // ASK: 5% or 2.00, Floor 27
+  let y3_ask = applyRaise(y2_ask.rate, 0.05, 2.0, 27.0);
 
-  // --- 2. CALCULATE CASH/RETRO ---
-  let ohsuBonusAvailable = fte >= 0.5 ? 1500 : 750;
-  let ohsuCash = !strike ? ohsuBonusAvailable : 0;
+  // --- 2. CALCULATE CASH/BONUS/RETRO ---
+  
+  // TA Bonus Logic
+  // $4500 for 0.5-1.0 FTE, $2250 for < 0.5 FTE
+  let taBonus = fte >= 0.5 ? 4500 : 2250;
 
-  let hourlyIncrease = y1_a.rate - startHourly;
+  // Ask Retro Logic (Back to July 1 2025)
+  // Retro is usually paid on the difference between New Rate and Old Rate
+  let hourlyIncreaseAsk = y1_ask.rate - startHourly;
   let weeklyHours = fte * 40;
-  let afscmeRetro = hourlyIncrease * weeklyHours * WEEKS_RETRO;
+  // Calculate Retro for the Ask side
+  let askRetro = hourlyIncreaseAsk * weeklyHours * WEEKS_RETRO;
 
-  // --- 3. TRADE-OFF ANALYSIS ---
-  const strikeImpactBox = document.getElementById('strikeImpactBox');
-  if (strike) {
-    // COSTS
-    const lostWages = startHourly * 8 * fte * strikeDays;
-    const totalStrikeCost = lostWages + ohsuBonusAvailable;
+  // --- 3. RENDER TABLE ---
+  
+  // Row 1
+  html += row(1, y1_cpi, y1_ta, y1_ask, annualHours);
+  taGross += y1_ta.rate * annualHours;
+  askGross += y1_ask.rate * annualHours;
 
-    // GAINS
-    let gain_Y1_wages = (y1_a.rate - y1_o.rate) * annualHours;
-    let gain_Y1_total = gain_Y1_wages + afscmeRetro; // Wages + Retro
-    let gain_Y2 = (y2_a.rate - y2_o.rate) * annualHours;
-    let gain_Y3 = (y3_a.rate - y3_o.rate) * annualHours;
-
-    // NET POSITIONS
-    let netY1 = gain_Y1_total - totalStrikeCost;
-    let netY2 = netY1 + gain_Y2;
-    let netY3 = netY2 + gain_Y3;
-
-    // BUILD ANALYSIS MESSAGE
-    let boxHtml = `<h3>⚖️ Strike Trade-off Analysis</h3>`;
-
-    // Section 1: The Costs
-    boxHtml += `<p style="margin-bottom: 8px;"><strong>The Costs:</strong> Striking for ${strikeDays} days costs approx. <strong class="diff-negative">${fmt.format(
-      totalStrikeCost
-    )}</strong>.<br>`;
-    boxHtml += `<span style="font-size: 0.9em; color: #666; margin-left: 10px;">(${fmt.format(
-      lostWages
-    )} lost wages + ${fmt.format(
-      ohsuBonusAvailable
-    )} lost OHSU bonus)</span></p>`;
-
-    // Section 2: The Gains
-    boxHtml += `<p style="margin-bottom: 8px;"><strong>The Gains:</strong> The AFSCME Year 1 offer is worth <strong style="color: var(--accent-afscme);">${fmt.format(
-      gain_Y1_total
-    )} MORE</strong> than OHSU's.<br>`;
-    boxHtml += `<span style="font-size: 0.9em; color: #666; margin-left: 10px;">(${fmt.format(
-      gain_Y1_wages
-    )} in better wages + ${fmt.format(afscmeRetro)} in back pay)</span></p>`;
-
-    // Section 3: Bottom Line (UPDATED LOGIC FOR CLARITY)
-    boxHtml += `<div class="strike-net-context"><strong>Bottom Line:</strong> `;
-    if (netY1 >= 0) {
-      boxHtml += `You end up <strong class="diff-positive">${fmt.format(
-        netY1
-      )} ahead</strong> in Year 1.`;
-    } else if (netY2 >= 0) {
-      // Explicitly state Y1 is a loss, but Y2 recovers it.
-      boxHtml += `You are behind in Year 1, but you recoup all losses and end up <strong class="diff-positive">${fmt.format(
-        netY2
-      )} ahead</strong> by Year 2.`;
-    } else if (netY3 >= 0) {
-      boxHtml += `You are behind for the first two years, but you recoup all losses and end up <strong class="diff-positive">${fmt.format(
-        netY3
-      )} ahead</strong> by Year 3.`;
-    } else {
-      boxHtml += `Based on this duration, strike costs would exceed the cumulative 3-year gains by <strong class="diff-negative">${fmt.format(
-        Math.abs(netY3)
-      )}</strong>.`;
-    }
-    boxHtml += `</div>`;
-
-    strikeImpactBox.innerHTML = boxHtml;
-    strikeImpactBox.style.display = 'block';
-  } else {
-    strikeImpactBox.style.display = 'none';
-  }
-
-  // --- 4. RENDER TABLE ---
-  html += row(1, y1_cpi, y1_o, y1_a, annualHours);
-  oGross += y1_o.rate * annualHours;
-  aGross += y1_a.rate * annualHours;
-
-  oGross += ohsuCash;
-  aGross += afscmeRetro;
+  // Add Cash Row (Bonus vs Retro)
+  taGross += taBonus;
+  askGross += askRetro;
+  
   html += `
     <tr style="background:#eef6fc;">
         <td><strong>Immediate Cash</strong></td>
         <td class="cpi-col" style="opacity:0.5;"><small>N/A</small></td>
-        <td class="ohsu-col">
-            <div class="rate-cell">${fmt.format(ohsuCash)}</div>
-            <span class="reason-tag">${
-              strike ? 'Strike declared (Bonus lost)' : 'Ratification Bonus'
-            }</span>
+        <td class="ta-col">
+            <div class="rate-cell">${fmt.format(taBonus)}</div>
+            <span class="reason-tag">Ratification Bonus</span>
         </td>
-        <td class="afscme-col">
-             <div class="rate-cell">${fmt.format(afscmeRetro)}</div>
-             <span class="reason-tag">Est. Retro Pay (~${WEEKS_RETRO} weeks)</span>
+        <td class="ask-col">
+             <div class="rate-cell">${fmt.format(askRetro)}</div>
+             <span class="reason-tag">Calculated Retro (~${Math.floor(WEEKS_RETRO)} wks)</span>
         </td>
         <td class="${
-          afscmeRetro - ohsuCash > 0 ? 'diff-positive' : 'diff-negative'
+          askRetro - taBonus > 0 ? 'diff-positive' : 'diff-negative'
         }">
-            ${afscmeRetro - ohsuCash > 0 ? '+' : ''}${fmt.format(
-    afscmeRetro - ohsuCash
-  )}
+            ${askRetro - taBonus > 0 ? '+' : ''}${fmt.format(askRetro - taBonus)}
         </td>
     </tr>`;
 
-  html += row(2, y2_cpi, y2_o, y2_a, annualHours);
-  oGross += y2_o.rate * annualHours;
-  aGross += y2_a.rate * annualHours;
+  // Row 2
+  html += row(2, y2_cpi, y2_ta, y2_ask, annualHours);
+  taGross += y2_ta.rate * annualHours;
+  askGross += y2_ask.rate * annualHours;
 
-  html += row(3, y3_cpi, y3_o, y3_a, annualHours);
-  oGross += y3_o.rate * annualHours;
-  aGross += y3_a.rate * annualHours;
+  // Row 3
+  html += row(3, y3_cpi, y3_ta, y3_ask, annualHours);
+  taGross += y3_ta.rate * annualHours;
+  askGross += y3_ask.rate * annualHours;
 
   // RENDER FINAL
   document.getElementById('tableBody').innerHTML = html;
-  document.getElementById('ohsuTotalGross').innerText = fmt.format(oGross);
-  document.getElementById('afscmeTotalGross').innerText = fmt.format(aGross);
-  document.getElementById('finalDiff').innerText = fmt.format(aGross - oGross);
-  document.getElementById('ohsuBonusNote').innerText =
-    ohsuCash > 0
-      ? `Includes ${fmt.format(ohsuCash)} bonus`
-      : 'No ratification bonus (Strike)';
+  
+  // Update Summary Boxes
+  document.getElementById('taTotalGross').innerText = fmt.format(taGross);
+  document.getElementById('askTotalGross').innerText = fmt.format(askGross);
+  document.getElementById('finalDiff').innerText = fmt.format(askGross - taGross);
+  
+  document.getElementById('taBonusNote').innerText = 
+    `Includes ${fmt.format(taBonus)} ratification bonus`;
+    
   document.getElementById('resultsArea').style.display = 'block';
 }
 
@@ -232,18 +198,18 @@ function renderDual(hourlyRate, annualHours) {
     `;
 }
 
-function row(year, cpi, oRes, aRes, annualHours) {
-  let hDiff = aRes.rate - oRes.rate;
+function row(year, cpi, taRes, askRes, annualHours) {
+  let hDiff = askRes.rate - taRes.rate;
   return `<tr>
         <td><strong>Year ${year}</strong></td>
         <td class="cpi-col">${renderDual(cpi, annualHours)}</td>
-        <td class="ohsu-col ${oRes.rate < cpi ? 'losing-to-inflation' : ''}">
-            ${renderDual(oRes.rate, annualHours)}
-            <span class="reason-tag">${oRes.reason}</span>
+        <td class="ta-col ${taRes.rate < cpi ? 'losing-to-inflation' : ''}">
+            ${renderDual(taRes.rate, annualHours)}
+            <span class="reason-tag">${taRes.reason}</span>
         </td>
-        <td class="afscme-col ${aRes.rate < cpi ? 'losing-to-inflation' : ''}">
-             ${renderDual(aRes.rate, annualHours)}
-             <span class="reason-tag">${aRes.reason}</span>
+        <td class="ask-col ${askRes.rate < cpi ? 'losing-to-inflation' : ''}">
+             ${renderDual(askRes.rate, annualHours)}
+             <span class="reason-tag">${askRes.reason}</span>
         </td>
         <td class="${hDiff > 0 ? 'diff-positive' : 'diff-negative'}">
             ${hDiff > 0 ? '+' : ''}${fmt.format(hDiff * annualHours)}
