@@ -3,27 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OHSU vs AFSCME Comparator</title>
+    <title>OHSU Tentative Agreement vs AFSCME Last Ask</title>
+    <style>
+        :root {
+            --accent-ta: #1976D2;  /* Blue for TA */
+            --accent-ask: #388E3C; /* Green for Union Ask */
+            --accent-cpi: #f5f5f5;
+        }
+        .ta-card h3 { color: var(--accent-ta); border-bottom: 2px solid var(--accent-ta); }
+        .ask-card h3 { color: var(--accent-ask); border-bottom: 2px solid var(--accent-ask); }
+        
+        /* Update table headers to match new vars */
+        .th-offer:nth-child(3) { background: var(--accent-ta); color: white; }
+        .th-offer:nth-child(4) { background: var(--accent-ask); color: white; }
+        
+        /* Logic for column colors */
+        .ta-col { background-color: #e3f2fd; } /* Light Blue */
+        .ask-col { background-color: #e8f5e9; } /* Light Green */
+    </style>
   </head>
   <body>
     <div class="container">
-      <h1>⚖️ OHSU vs AFSCME Comparator</h1>
+      <h1>⚖️ TA vs Last Ask Comparator</h1>
 
       <div class="offer-summary">
-        <div class="offer-card ohsu-card">
-          <h3>🏢 OHSU Offer (as of Dec 2)</h3>
+        <div class="offer-card ta-card">
+          <h3>🤝 Tentative Agreement</h3>
           <ul>
-            <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $22.00.</li>
-            <li><strong>Y2:</strong> 3.25%. Floor: $22.72.</li>
-            <li><strong>Y3:</strong> 3%. Floor: $23.40.</li>
+            <li><strong>Y1:</strong> Greater of 4% OR $1.25. Floor: $20.00.</li>
+            <li><strong>Y2:</strong> 3.25%. Floor: $21.00.</li>
+            <li><strong>Y3:</strong> 3%. Floor: $23.00.</li>
             <li>
-              <strong>Bonus:</strong> $1,500 (&ge;0.5 FTE) / $750 (&lt;0.5 FTE)
-              if NO strike.
+              <strong>Bonus:</strong> $4,500 (0.5-1.0 FTE) <br> $2,250 (0-0.49 FTE).
             </li>
           </ul>
         </div>
-        <div class="offer-card afscme-card">
-          <h3>✊ AFSCME Offer</h3>
+        <div class="offer-card ask-card">
+          <h3>🗣️ Last Union Ask</h3>
           <ul>
             <li><strong>Y1:</strong> Greater of 8% OR $5.00. Floor: $23.00.</li>
             <li><strong>Y2:</strong> Greater of 5% OR $2.00. Floor: $25.00.</li>
@@ -38,35 +54,17 @@
           <div class="input-group wage-toggle-group">
             <label>Input Type</label>
             <div class="segmented-control">
-              <input
-                type="radio"
-                name="wageType"
-                id="typeHourly"
-                value="hourly"
-                checked
-              />
+              <input type="radio" name="wageType" id="typeHourly" value="hourly" checked />
               <label for="typeHourly" id="labelHourly">Hourly Rate</label>
 
-              <input
-                type="radio"
-                name="wageType"
-                id="typeSalary"
-                value="salary"
-              />
+              <input type="radio" name="wageType" id="typeSalary" value="salary" />
               <label for="typeSalary" id="labelSalary">Annual Salary</label>
             </div>
           </div>
 
           <div class="input-group flex-grow">
-            <label for="startVal" id="startValLabel"
-              >Current Hourly Rate ($)</label
-            >
-            <input
-              type="number"
-              id="startVal"
-              placeholder="e.g. 30.00"
-              step="0.01"
-            />
+            <label for="startVal" id="startValLabel">Current Hourly Rate ($)</label>
+            <input type="number" id="startVal" placeholder="e.g. 30.00" step="0.01" />
           </div>
 
           <div class="input-group flex-grow">
@@ -77,7 +75,8 @@
               <option value="0.8">0.8 FTE (32 hrs/wk)</option>
               <option value="0.6">0.6 FTE (24 hrs/wk)</option>
               <option value="0.5">0.5 FTE (20 hrs/wk)</option>
-              <option value="0.1">Under 0.5 FTE</option>
+              <option value="0.4">0.4 FTE (16 hrs/wk)</option>
+              <option value="0.1">Under 0.4 FTE</option>
             </select>
           </div>
         </div>
@@ -91,102 +90,46 @@
               <option value="0.050">3-Year Average (5.0%)</option>
               <option value="0.020">Fed Target (2.0%)</option>
             </select>
-            <div class="help-text">
-              Based on official BLS data.
-              <a
-                href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1913-"
-                target="_blank"
-                >View Data</a
-              >
-            </div>
-          </div>
-
-          <div class="input-group flex-grow">
-            <label for="strikeDays">Missed Work Days</label>
-            <input
-              type="number"
-              id="strikeDays"
-              placeholder="0"
-              min="0"
-              step="1"
-            />
-            <div class="help-text">Enter 0 if strike is averted.</div>
           </div>
         </div>
       </div>
+      
       <button id="runBtn">Run Comparison</button>
 
-      <div class="results-area" id="resultsArea">
-        <div
-          id="strikeImpactBox"
-          class="strike-impact-box"
-          style="display: none"
-        >
-          <h3>⚖️ Strike Trade-off Analysis</h3>
-          <p>
-            Missing <strong id="strikeDaysText">0</strong> work days will cost
-            approximately
-            <strong id="strikeLostWages" class="diff-negative">$0.00</strong> in
-            lost gross wages.
-          </p>
-          <div id="strikeNetContext" class="strike-net-context"></div>
-        </div>
-
+      <div class="results-area" id="resultsArea" style="display:none;">
+        
         <h2>Detailed Breakdown</h2>
-        <p
-          style="
-            font-size: 0.95em;
-            color: #555;
-            background: #fff3e0;
-            padding: 10px;
-            border-left: 4px solid #ff9800;
-            border-radius: 4px;
-          "
-        >
-          <strong>Inflation Warning:</strong> Hourly rates highlighted in
-          <span style="color: #c62828; font-weight: bold">red</span> indicate
-          that the offer is <em>below</em> the rate needed to maintain your
-          current buying power.
-        </p>
         <table id="resultsTable">
           <thead>
             <tr>
               <th class="th-timeline">Timeline</th>
-              <th class="th-cpi" style="background: var(--accent-cpi)">
-                Maintain Buying Power<br /><small
-                  style="font-weight: normal; opacity: 0.9"
-                  >Target to equal today's dollars</small
-                >
+              <th class="th-cpi" style="background: #90A4AE; color: white;">
+                Maintain Buying Power
               </th>
-              <th class="th-offer">OHSU Offer</th>
-              <th class="th-offer">AFSCME Offer</th>
-              <th class="th-diff">
-                Difference<br /><small>(Annual Gross)</small>
-              </th>
+              <th class="th-offer">Tentative Agreement</th>
+              <th class="th-offer">Last Union Ask</th>
+              <th class="th-diff">Difference (Gross)</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
 
         <div class="totals-grid">
-          <div class="total-box ohsu-total">
-            <h3>OHSU 3-Year Total</h3>
-            <div class="big-num" id="ohsuTotalGross">$0</div>
-            <small id="ohsuBonusNote">Includes Ratification Bonus</small>
+          <div class="total-box ta-total" style="border-top: 4px solid var(--accent-ta); background: #f9f9f9; padding: 15px;">
+            <h3 style="color: var(--accent-ta);">TA 3-Year Total</h3>
+            <div class="big-num" id="taTotalGross">$0</div>
+            <small id="taBonusNote">Includes Bonus</small>
           </div>
-          <div class="total-box afscme-total">
-            <h3>AFSCME 3-Year Total</h3>
-            <div class="big-num" id="afscmeTotalGross">$0</div>
-            <small>Includes estimated retro pay</small>
+          <div class="total-box ask-total" style="border-top: 4px solid var(--accent-ask); background: #f9f9f9; padding: 15px;">
+            <h3 style="color: var(--accent-ask);">Last Ask 3-Year Total</h3>
+            <div class="big-num" id="askTotalGross">$0</div>
+            <small>Includes Retro Pay</small>
           </div>
         </div>
+        
         <div style="text-align: center; margin-top: 30px; font-size: 1.2em">
-          3-Year Gross Difference:
-          <strong
-            id="finalDiff"
-            style="color: var(--accent-afscme); font-size: 1.5em"
-            >$0</strong
-          >
+          GAP (What was left on the table):
+          <strong id="finalDiff" style="color: var(--accent-ask); font-size: 1.5em">$0</strong>
         </div>
       </div>
     </div>
